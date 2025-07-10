@@ -1,0 +1,9 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: cp4ba-cloud-pak-deployer-demos-run-
+spec:
+  timeouts:
+    pipeline: 4h0m0s
+  pipelineRef:
+    name: cp4ba-cloud-pak-deployer-demos-pipeline-txc2025-ecm-only

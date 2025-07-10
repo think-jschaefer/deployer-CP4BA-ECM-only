@@ -1,0 +1,2142 @@
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: cp4ba-cloud-pak-deployer-demos-pipeline-txc2025-ecm-only
+spec:
+  params:
+    - name: namespace
+      type: string
+      description: Namespace for Cloud Pak Deployer deployment
+      default: "cloud-pak-deployer"
+    - name: storage-class
+      type: string
+      description: RWX storage class needed for Cloud Pak Deployer
+      default: "ocs-external-storagecluster-cephfs"
+    - name: cloud-pak-deployer-storage-class
+      type: string
+      description: |
+        Choose the defined storage class for the cloud pak deployer.
+        {
+          "options": [
+            {"text": "auto-storage","value": "auto-storage", "default": "true"},
+            {"text": "ocs-storage","value": "ocs-storage"},
+            {"text": "nfs-storage","value": "nfs-storage"}
+          ]
+        }
+      default: "auto-storage"
+    - name: cloud-pak-deployer-storage-type
+      type: string
+      description: |
+        Choose the defined storage type for the cloud pak deployer.
+        {
+          "options": [
+            {"text": "auto","value": "auto", "default": "true"},
+            {"text": "ocs","value": "ocs"},
+            {"text": "nfs","value": "nfs"}
+          ]
+        }
+      default: "auto"
+    - name: ocp-client-version
+      type: string
+      description: Openshift client version
+      default: "4.16"
+    - name: cloud-pak-deployer-image-build
+      type: string
+      description: If the image is to be built from repo
+      default: "false"
+    - name: cloud-pak-deployer-image-build-repo
+      type: string
+      description: The Git repository from which the image is to be built
+      default: "https://github.com/IBM/cloud-pak-deployer"
+    - name: cloud-pak-deployer-image-build-repo-ref
+      type: string
+      description: The ref from which the image is to be built
+      default: "main"
+    - name: cloud-pak-deployer-image-address
+      type: string
+      description: The image address used for Cloud Pak Deployer run
+      default: "quay.io/cloud-pak-deployer/cloud-pak-deployer"      
+    - name: cloud-pak-deployer-image-tag
+      type: string
+      description: The image tag used for Cloud Pak Deployer run
+      default: "v3.1.8"
+    - name: ibm-entitlement-key
+      type: string
+      description: The IBM entitlement key with permissions for pulling cp4ba images
+      default: "false"
+    - name: universal-password
+      type: string
+      description: Universal password to be used for access. Is generated if not provided.
+      default: "txc2025_magic_115"
+    - name: cp4ba-project
+      type: string
+      description: Namespace for CP4BA deployment
+      default: "cp4ba"
+    - name: cp4ba-collateral-project
+      type: string
+      description: Namespace for CP4BA collateral deployment (prerequisites and extras)
+      default: "cp4ba-collateral"
+    - name: cp4ba-state
+      type: string
+      description: |
+        Should CP4BA be installed or removed?
+        {
+          "options": [
+            {"text": "Installed","value": "installed", "default": "true"},
+            {"text": "Removed","value": "removed" }
+          ]
+        }
+      default: "installed"
+    - name: cpfs-profile-size
+      type: string
+      description: |
+        What profile size do you want for CPFS instance?
+        {
+          "options": [
+            {"text": "Small","value": "small", "default": "true"},
+            {"text": "Medium","value": "medium" },
+            {"text": "Large","value": "large" }
+          ]
+        }
+      default: "small"
+    - name: cp4ba-profile-size
+      type: string
+      description: |
+        What profile size do you want for CP4BA instance?
+        {
+          "options": [
+            {"text": "Small","value": "small", "default": "true"},
+            {"text": "Medium","value": "medium" },
+            {"text": "Large","value": "large" }
+          ]
+        }
+      default: "small"
+    - name: bas-enabled
+      type: string
+      description: |
+        Business Automation Studio Optional Component of Foundation Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: bai-enabled
+      type: string
+      description: |
+        Business Automation Insights Optional Component of Foundation Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: ae-enabled
+      type: string
+      description: |
+        Application Engine Optional Component of Foundation Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: decisions-enabled
+      type: string
+      description: |
+        Operation Decision Manager pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: decision-center-enabled
+      type: string
+      description: |
+        Decison Center Optional Component of Operation Decision Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"      
+    - name: decision-runner-enabled
+      type: string
+      description: |
+        Decison Runner Optional Component of Operation Decision Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"      
+    - name: decision-server-runtime-enabled
+      type: string
+      description: |
+        Decison Server Optional Component of Operation Decision Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"     
+    - name: decisions-ads-enabled
+      type: string
+      description: |
+        Automation Decision Services pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: ads-designer-enabled
+      type: string
+      description: |
+        ADS Designer Optional Component of Automation Decision Services Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: ads-runtime-enabled
+      type: string
+      description: |
+        ADS Runtime Optional Component of Automation Decision Services Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: ads-genai-api-key
+      type: string
+      description: |
+        ADS GenAI API key?
+      default: "<watsonx_ai_api_key>"
+    - name: ads-genai-auth-url
+      type: string
+      description: |
+        ADS GenAI authentication URL?
+      default: "https://iam.bluemix.net/identity/token"
+    - name: ads-genai-ml-url
+      type: string
+      description: |
+        ADS GenAI ML URL?
+      default: "https://us-south.ml.cloud.ibm.com"
+    - name: ads-genai-project-id
+      type: string
+      description: |
+        ADS GenAI Project ID?
+      default: "<project_id>"      
+    - name: content-enabled
+      type: string
+      description: |
+        FileNet Content Manager pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: cmis-enabled
+      type: string
+      description: |
+        Content Management Interoperability Services Optional Component of FileNet Content Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"         
+    - name: css-enabled
+      type: string
+      description: |
+        Content Search Services Optional Component of FileNet Content Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"         
+    - name: es-enabled
+      type: string
+      description: |
+        External Share Optional Component of FileNet Content Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"         
+    - name: tm-enabled
+      type: string
+      description: |
+        Task Manager Optional Component of FileNet Content Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"         
+    - name: ier-enabled
+      type: string
+      description: |
+        Enterprise Records Optional Component of FileNet Content Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"         
+    - name: icc4sap-enabled
+      type: string
+      description: |
+        Content Collector for SAP Optional Component of FileNet Content Manager Pattern enabled?
+        {
+          "options": [
+            {"text": "false","value": "false", "default": "true"}
+          ]
+        }
+      default: "false"     
+    - name: application-enabled
+      type: string
+      description: |
+        Business Automation Application pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: app-designer-enabled
+      type: string
+      description: |
+        Application Designer Optional Component of Business Automation Application Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"            
+    - name: ae-data-persistence-enabled
+      type: string
+      description: |
+        Application Engine data persistence Optional Component of Business Automation Application Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"        
+    - name: document-processing-enabled
+      type: string
+      description: |
+        Automation Document Processing pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: document-processing-designer-enabled
+      type: string
+      description: |
+        Designer Optional Component of Automation Document Processing Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: workflow-enabled
+      type: string
+      description: |
+        Business Automation Workflow pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: baw-authoring-enabled
+      type: string
+      description: |
+        Workflow Authoring Optional Component of Business Automation Workflow Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: kafka-enabled
+      type: string
+      description: |
+        Exposed Kafka Service Optional Component of Business Automation Workflow Pattern enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: pm-enabled
+      type: string
+      description: |
+        Process Mining enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: rpa-enabled
+      type: string
+      description: |
+        Robotic Process Automation enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: cloudbeaver-enabled
+      type: string
+      description: |
+        CloudBeaver enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: roundcube-enabled
+      type: string
+      description: |
+        Roundcube enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: cerebro-enabled
+      type: string
+      description: |
+        Cerebro enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: akhq-enabled
+      type: string
+      description: |
+        AKHQ enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: mongo-express-enabled
+      type: string
+      description: |
+        Mongo Express enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: phpldapadmin-enabled
+      type: string
+      description: |
+        PHPLDAPAdmin enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: opensearch-dashboards-enabled
+      type: string
+      description: |
+        OpenSearch Dashboards enabled?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: co-deploy
+      type: string
+      description: |
+        Should the Client Onboarding be deployed? NOTE: This pipeline is configured to only run the ECM parts of the Client Onboarding lab.
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: co-configure-labs
+      type: string
+      description: |
+        Should the artifacts for the labs be deployed too (true) or only those for the Client Onboarding scenario (false)?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: co-enable-workflow-labs-for-business-users
+      type: string
+      description: |
+        Should the environment be configured so that business users can perform the Workflow labs?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+    - name: co-create-users
+      type: string
+      description: |
+        Should the environment be configured so that business users can perform the Workflow labs? (I think this description needs to be updated...)
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: co-rpa-bot-execution-user
+      type: string
+      description: User (e.g. cpadmin) for who the RPA bot is executed (specifying a non-existing user always skips the RPA bot execution)
+      default: "disabled"
+    - name: co-rpa-server
+      type: string
+      description: In case the RPA bot execution is enabled via above parameter need to set this to the Asynch Server API URL of the RPA environment to be used.
+      default: "disabled"
+    - name: co-print-detailed-message-to-console
+      type: string
+      description: |
+        Should detailed log messages be printed to the console (true) or just the summary (false)?
+        {
+          "options": [
+            {"text": "true","value": "true"},
+            {"text": "false","value": "false", "default": "true" }
+          ]
+        }
+      default: "true"
+    - name: co-generated-users-password
+      type: string
+      description: |
+        Use generated password or a fixed one for all users?
+        Value -generated- means generate, any other value is a static one.
+      default: "txc2025_magic_115"
+    - name: da-deploy
+      type: string
+      description: |
+        Should the Deployment Accelerator be deployed?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "true"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "true"
+    - name: da-image-tag
+      type: string
+      description: The image tag used for Accelerator
+      default: "latest"
+    - name: cm-deploy
+      type: string
+      description: |
+        Should the Claims Management demo be deployed?
+        {
+          "options": [
+            {"text": "true","value": "true", "default": "false"},
+            {"text": "false","value": "false" }
+          ]
+        }
+      default: "false"
+  finally:
+    - name: deployer-update-configmap-failure
+      when:
+        - input: $(tasks.run-the-deployer.status)
+          operator: in
+          values: ["Failed"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Deployer-Status":"Pipeline run failed. See Pipeline run for more details and consider running the pipeline again."}}'
+    - name: deployer-update-configmap-success
+      when:
+        - input: $(tasks.run-the-deployer.status)
+          operator: in
+          values: ["Succeeded"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Deployer-Status":"Pipeline run Successful, see ConfigMap $(params.cp4ba-project)-usage in $(params.namespace) Project for available Routes and credentials"}}'
+    - name: co-update-configmap-failure
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(tasks.co-job.status)
+          operator: in
+          values: ["Failed"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Client-Onboarding-Status":"Pipeline run failed. See Pipeline run for more details and consider running the pipeline again."}}'
+    - name: co-update-configmap-success
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(tasks.co-job.status)
+          operator: in
+          values: ["Succeeded"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Client-Onboarding-Status":"Pipeline run Successful, see ConfigMap client-onboarding-information in $(params.cp4ba-project) Project for Client Onboarding access details"}}'
+    - name: da-update-configmap-failure
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(tasks.da-deployment.status)
+          operator: in
+          values: ["Failed"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Accelerator-Status":"Pipeline run failed. See Pipeline run for more details and consider running the pipeline again."}}'
+    - name: da-update-configmap-success
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(tasks.da-deployment.status)
+          operator: in
+          values: ["Succeeded"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Accelerator-Status":"Pipeline run Successful, see newly created Route cp4accelerator in $(params.cp4ba-project) Project to access Accelerator"}}'
+    - name: cm-update-configmap-failure
+      when:
+        - input: $(params.cm-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(tasks.cm-deployment.status)
+          operator: in
+          values: ["Failed"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Claims-Management-Status":"Pipeline run failed. See Pipeline run for more details and consider running the pipeline again."}}'
+    - name: cm-update-configmap-success
+      when:
+        - input: $(params.cm-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(tasks.cm-deployment.status)
+          operator: in
+          values: ["Succeeded"]
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc patch configmap/pipeline-output -p '{"data":{"Claims-Management-Status":"Pipeline run Successful, Claims Management demo deployed"}}'
+  tasks:
+    - name: add-namespace-cp4ba
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              creationTimestamp: null
+              name: $(params.cp4ba-project)
+            EOF
+    - name: da-add-sa
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace-cp4ba
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: cpaccelerator-sa
+              namespace: $(params.cp4ba-project)
+            EOF
+    - name: da-bind-sa-cluster-role
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - da-add-sa
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: cpaccelerator-scc
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: cluster-admin
+            subjects:
+            - kind: ServiceAccount
+              name: cpaccelerator-sa
+              namespace: $(params.cp4ba-project)
+            EOF
+    - name: da-config
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace-cp4ba
+      params:
+        - name: SCRIPT
+          value: |
+             oc apply -f - <<EOF 
+             apiVersion: v1
+             kind: ConfigMap
+             metadata:
+              name: cp4accelerator-cm
+              namespace: $(params.cp4ba-project)
+             data:
+               connection.properties: |
+                namespace=$(params.cp4ba-project)
+                masterUrl=http
+                mode=enterprise
+             EOF
+    - name: da-pvc
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace-cp4ba
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: v1
+            kind: PersistentVolumeClaim
+            metadata:
+              name: cp4accelerator-pvc
+              namespace: $(params.cp4ba-project)
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              storageClassName: $(params.storage-class)
+              resources:
+                requests:
+                  storage: 2Gi
+            EOF
+    - name: da-service
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace-cp4ba
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            kind: Service
+            apiVersion: v1
+            metadata:
+              name: cp4accelerator-service
+              namespace: $(params.cp4ba-project)
+            spec:
+              ports:
+                - protocol: TCP
+                  port: 8080
+                  targetPort: 8080
+              selector:
+                app: cp4accelerator-app
+            EOF
+    - name: da-deployment
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - da-bind-sa-cluster-role
+        - da-config
+        - da-pvc
+        - da-service
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: cp4accelerator
+              namespace: $(params.cp4ba-project)
+            spec:
+              selector:
+                matchLabels:
+                  app: cp4accelerator-app
+              replicas: 1
+              template:
+                metadata:
+                  labels:
+                    app: cp4accelerator-app
+                spec:
+                  serviceAccountName: cpaccelerator-sa
+                  containers:
+                    - name: cp4accelerator
+                      image: quay.io/malek_jabri/cp4baacceleratoramd:$(params.da-image-tag)
+                      imagePullPolicy: Always
+                      ports:
+                        - containerPort: 8080
+                          protocol: TCP
+                      resources:
+                        requests:
+                          cpu: 500m
+                          memory: 512Mi
+                        limits:
+                          cpu: 1000m
+                          memory: 1536Mi
+                      startupProbe:
+                        httpGet:
+                          port: 8080
+                        timeoutSeconds: 1
+                        periodSeconds: 10
+                        successThreshold: 1
+                        failureThreshold: 30
+                      readinessProbe:
+                        httpGet:
+                          port: 8080
+                        timeoutSeconds: 1
+                        periodSeconds: 10
+                        successThreshold: 1
+                        failureThreshold: 10
+                      livenessProbe:
+                        httpGet:
+                          port: 8080
+                        timeoutSeconds: 1
+                        periodSeconds: 10
+                        successThreshold: 1
+                        failureThreshold: 10
+                      env:
+                        - name: "JAVA_OPTS"
+                          value: "-Xms512m -Xmx1024m"
+                      volumeMounts:
+                        - name: connection-cm
+                          mountPath: /home/cm
+                        - mountPath: /var/cp4accelerator
+                          name: cp4accelerator-pvc
+                  volumes:
+                    - name: connection-cm
+                      configMap:
+                        name: cp4accelerator-cm
+                    - name: cp4accelerator-pvc
+                      persistentVolumeClaim:
+                        claimName: cp4accelerator-pvc
+            EOF
+
+            sleep 20
+            oc wait -n $(params.cp4ba-project) --for=condition=available --timeout=300s deployment/cp4accelerator 
+    - name: add-namespace
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              creationTimestamp: null
+              name: $(params.namespace)
+            EOF
+    - name: add-sa
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: cloud-pak-deployer-sa
+              namespace: $(params.namespace)
+            EOF
+    - name: bind-sa-role
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-sa
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: RoleBinding
+            metadata:
+              name: system:openshift:scc:privileged
+              namespace: $(params.namespace)
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: system:openshift:scc:privileged
+            subjects:
+            - kind: ServiceAccount
+              name: cloud-pak-deployer-sa
+              namespace: $(params.namespace)
+            EOF
+    - name: bind-sa-cluster-role
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-sa
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: cloud-pak-deployer-cluster-admin
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: cluster-admin
+            subjects:
+            - kind: ServiceAccount
+              name: cloud-pak-deployer-sa
+              namespace: $(params.namespace)
+            EOF
+    - name: create-pvc
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF
+            apiVersion: v1 
+            kind: PersistentVolumeClaim
+            metadata:
+              name: cloud-pak-deployer-status
+              namespace: $(params.namespace)
+            spec:
+              accessModes:
+              - ReadWriteMany
+              storageClassName: $(params.storage-class)
+              resources:
+                requests:
+                  storage: 10Gi
+            EOF
+    - name: co-job-cleanup
+      # Delete CO Job as preventive step if pipeline is re-run and previous attempt failed in co-job Task. If the job is not removed, da-pipeline-sync Task would fail before the Job is removed at the beginning of co-job Task
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - add-namespace
+      params:
+        - name: SCRIPT
+          value: |
+            oc delete job client-onboarding-deploy -n $(params.cp4ba-project) --ignore-not-found
+    - name: get-tz-ibm-entitlement-key
+      retries: 3
+      params:
+        - name: KEY_ID
+          value: 968d7819-f2c5-7b67-c420-3c6bfd51521e
+        - name: SECRETS_MANAGER_ENDPOINT_URL
+          value: >-
+            https://afa20521-cd75-4864-843f-e59fd0ffd49d.us-south.secrets-manager.appdomain.cloud
+      taskRef:
+        kind: Task
+        name: ibmcloud-secrets-manager-get
+      runAfter:
+        - add-namespace
+    - name: assign-ibm-entitlement-key
+      retries: 3
+      params:
+        - name: ibm-entitlement-key
+          value: "$(params.ibm-entitlement-key)"
+        - name: tz-ibm-entitlement-key
+          value: "$(tasks.get-tz-ibm-entitlement-key.results.secret-value)"
+      taskSpec:
+        params:
+          - name: ibm-entitlement-key
+            type: string
+            description: user provided ibm-entitlement-key
+          - name: tz-ibm-entitlement-key
+            type: string
+            description: user provided ibm-entitlement-key
+        results:
+          - name: key
+            description: The key to use for the secret
+            type: string
+        steps:
+          - image: podman
+            securityContext:
+              capabilities:
+                add: ["SETFCAP"]
+            script: |
+              if [ "$(params.ibm-entitlement-key)" != "false" ]; then
+                echo "user provided key - $(params.ibm-entitlement-key)"
+                printf "$(params.ibm-entitlement-key)" | tee $(results.key.path)
+
+                echo "testing key for cp.icr.io"
+                podman login cp.icr.io --username cp --password $(params.ibm-entitlement-key)
+              else
+                echo "techzone key - $(params.tz-ibm-entitlement-key)"
+                printf "$(params.tz-ibm-entitlement-key)" | tee $(results.key.path)
+              fi
+      runAfter:
+        - get-tz-ibm-entitlement-key
+    - name: create-entitlement-key-secret
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - assign-ibm-entitlement-key
+      retries: 3
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: cloud-pak-entitlement-key
+              namespace: $(params.namespace)
+            type: Opaque
+            stringData:
+              cp-entitlement-key: |
+                $(tasks.assign-ibm-entitlement-key.results.key)
+            EOF
+    - name: configure-cloud-paks-services
+      runAfter:
+        - add-namespace
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: cloud-pak-deployer-config
+              namespace: $(params.namespace)
+            data:
+              cpd-config.yaml: |
+                global_config:
+                  environment_name: cp4ba
+                  cloud_platform: existing-ocp
+                  env_id: cp4ba
+                  universal_password: '$(params.universal-password)'
+
+                openshift:
+                - name: cpd-demo
+                  ocp_version: '$(params.ocp-client-version)'
+                  cluster_name: cpd-demo
+                  domain_name: example.com
+                  openshift_storage:
+                  - storage_name: $(params.cloud-pak-deployer-storage-class)
+                    storage_type: $(params.cloud-pak-deployer-storage-type)
+
+                cp4ba:
+                - project: $(params.cp4ba-project)
+                  collateral_project: $(params.cp4ba-collateral-project)
+                  openshift_cluster_name: cpd-demo
+                  accept_licenses: true
+                  state: $(params.cp4ba-state)
+                  cpfs_profile_size: $(params.cpfs-profile-size) # Profile size which affect replicas and resources of Pods of CPFS as per https://www.ibm.com/docs/en/cpfs?topic=operator-hardware-requirements-recommendations-foundational-services
+
+                  # Section for Cloud Pak for Business Automation itself
+                  cp4ba:
+                    # Set to false if you don't want to install (or remove) CP4BA
+                    enabled: true # Currently always true
+                    profile_size: $(params.cp4ba-profile-size) # Profile size which affect replicas and resources of Pods as per https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/latest?topic=pcmppd-system-requirements
+                    patterns:
+                      foundation: # Foundation pattern, always true - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__foundation
+                        optional_components:
+                          bas: $(params.bas-enabled) # Business Automation Studio (BAS) 
+                          bai: $(params.bai-enabled) # Business Automation Insights (BAI)
+                          ae: $(params.ae-enabled) # Application Engine (AE)
+                      decisions: # Operational Decision Manager (ODM) - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__odm
+                        enabled: $(params.decisions-enabled)
+                        optional_components:
+                          decision_center: $(params.decision-center-enabled) # Decison Center (ODM)
+                          decision_runner: $(params.decision-runner-enabled) # Decison Runner (ODM)
+                          decision_server_runtime: $(params.decision-server-runtime-enabled) # Decison Server (ODM)
+                        # Additional customization for Operational Decision Management
+                        # Contents of the following will be merged into ODM part of CP4BA CR yaml file. Arrays are overwritten.
+                        cr_custom:
+                          spec:
+                            odm_configuration:
+                              decisionCenter:
+                                # Enable support for decision models
+                                disabledDecisionModel: false
+                      decisions_ads: # Automation Decision Services (ADS) - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__ads
+                        enabled: $(params.decisions-ads-enabled)
+                        optional_components:
+                          ads_designer: $(params.ads-designer-enabled) # Designer (ADS)
+                          ads_runtime: $(params.ads-runtime-enabled) # Runtime (ADS)
+                        gen_ai: # https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/latest?topic=services-configuring-generative-ai-secret
+                          apiKey: $(params.ads-genai-api-key)
+                          authUrl: $(params.ads-genai-auth-url)
+                          mlUrl: $(params.ads-genai-ml-url)
+                          projectId: $(params.ads-genai-project-id)                          
+                      content: # FileNet Content Manager (FNCM) - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__ecm
+                        enabled: $(params.content-enabled)
+                        optional_components:
+                          cmis: $(params.cmis-enabled) # Content Management Interoperability Services (FNCM - CMIS)
+                          css: $(params.css-enabled) # Content Search Services (FNCM - CSS)
+                          es: $(params.es-enabled) # External Share (FNCM - ES)
+                          tm: $(params.tm-enabled) # Task Manager (FNCM - TM)
+                          ier: $(params.ier-enabled) # IBM Enterprise Records (FNCM - IER)
+                          icc4sap: $(params.icc4sap-enabled) # IBM Content Collector for SAP (FNCM - ICC4SAP) - Currently not implemented
+                      application: # Business Automation Application (BAA) - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__baa
+                        enabled: $(params.application-enabled)
+                        optional_components:
+                          app_designer: $(params.app-designer-enabled) # App Designer (BAA)
+                          ae_data_persistence: $(params.ae-data-persistence-enabled) # App Engine data persistence (BAA)
+                      document_processing: # Automation Document Processing (ADP) - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__adp
+                        enabled: $(params.document-processing-enabled)
+                        optional_components: 
+                          document_processing_designer: $(params.document-processing-designer-enabled) # Designer (ADP)
+                        # Additional customization for Automation Document Processing
+                        # Contents of the following will be merged into ADP part of CP4BA CR yaml file. Arrays are overwritten.
+                        cr_custom:
+                          spec:
+                            ca_configuration:
+                              # GPU config as described on https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.1?topic=resource-configuring-document-processing
+                              deeplearning:
+                                gpu_enabled: false
+                                nodelabel_key: nvidia.com/gpu.present
+                                nodelabel_value: "true"
+                              ocrextraction:
+                                use_iocr: all # Allowed values: "none" to uninstall, "all" or "auto" to install (these are aliases)
+                      workflow: # Business Automation Workflow (BAW) - https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.1?topic=deployment-capabilities-production-deployments#concept_c2l_1ks_fnb__baw
+                        enabled: $(params.workflow-enabled)
+                        optional_components:
+                          baw_authoring: $(params.baw-authoring-enabled) # Workflow Authoring (BAW) - always keep true if workflow pattern is chosen. BAW Runtime is not implemented.
+                          kafka: $(params.kafka-enabled) # Will install a kafka cluster and enable kafka service for workflow authoring.
+
+                  # Section for IBM Process mining
+                  pm:
+                    # Set to false if you don't want to install (or remove) Process Mining
+                    enabled: $(params.pm-enabled)
+                    # Additional customization for Process Mining
+                    # Contents of the following will be merged into PM CR yaml file. Arrays are overwritten.
+                    cr_custom:
+                      spec:
+                        processmining:
+                          storage:
+                            # Disables redis to spare resources as per https://www.ibm.com/docs/en/process-mining/1.13.2?topic=configurations-custom-resource-definition
+                            redis:
+                              install: false  
+
+                  # Section for IBM Robotic Process Automation
+                  rpa:
+                    # Set to false if you don't want to install (or remove) RPA
+                    enabled: $(params.rpa-enabled)
+                    # Additional customization for Robotic Process Automation
+                    # Contents of the following will be merged into RPA CR yaml file. Arrays are overwritten.
+                    cr_custom:
+                      spec:
+                        # Configures the NLP provider component of IBM RPA. You can disable it by specifying 0. https://www.ibm.com/docs/en/rpa/21.0?topic=platform-configuring-rpa-custom-resources#basic-setup
+                        nlp:
+                          replicas: 1
+
+                  # Set to false if you don't want to install (or remove) CloudBeaver (PostgreSQL, DB2, MSSQL UI)
+                  cloudbeaver_enabled: $(params.cloudbeaver-enabled)
+
+                  # Set to false if you don't want to install (or remove) Roundcube
+                  roundcube_enabled: $(params.roundcube-enabled)
+
+                  # Set to false if you don't want to install (or remove) Cerebro
+                  cerebro_enabled: $(params.cerebro-enabled)
+
+                  # Set to false if you don't want to install (or remove) AKHQ
+                  akhq_enabled: $(params.akhq-enabled)
+
+                  # Set to false if you don't want to install (or remove) Mongo Express
+                  mongo_express_enabled: $(params.mongo-express-enabled)
+
+                  # Set to false if you don't want to install (or remove) phpLDAPAdmin
+                  phpldapadmin_enabled: $(params.phpldapadmin-enabled)
+
+                  # Set to false if you don't want to install (or remove) OpenSearch Dashboards
+                  opensearch_dashboards_enabled: $(params.opensearch-dashboards-enabled)                  
+            EOF
+    - name: build-image
+      runAfter:
+        - add-namespace
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      params:
+        - name: SCRIPT
+          value: |
+            if [[ $(params.cloud-pak-deployer-image-build) == "true" ]]; then
+              oc delete ImageStream cloud-pak-deployer -n $(params.namespace) --ignore-not-found
+              oc delete Build cloud-pak-deployer -n $(params.namespace) --ignore-not-found
+
+              sleep 20
+
+              oc apply -f - <<EOF
+              apiVersion: image.openshift.io/v1
+              kind: ImageStream
+              metadata:
+                name: cloud-pak-deployer
+                namespace: $(params.namespace)
+              spec:
+                lookupPolicy:
+                  local: true
+            EOF
+
+              oc apply -f - <<EOF
+              kind: Build
+              apiVersion: build.openshift.io/v1
+              metadata:
+                name: cloud-pak-deployer
+                namespace: $(params.namespace)
+              spec:
+                serviceAccount: builder
+                source:
+                  type: Git
+                  git:
+                    uri: '$(params.cloud-pak-deployer-image-build-repo)'
+                    ref: '$(params.cloud-pak-deployer-image-build-repo-ref)'
+                strategy:
+                  type: Docker
+                  dockerStrategy:
+                    buildArgs:
+                      - name: "CPD_OLM_UTILS_V1_IMAGE"
+                        value: "icr.io/cpopen/cpd/olm-utils:latest"
+                      - name: "CPD_OLM_UTILS_V2_IMAGE"
+                        value: "icr.io/cpopen/cpd/olm-utils-v2:latest"
+                      - name: "CPD_OLM_UTILS_V3_IMAGE"
+                        value: "icr.io/cpopen/cpd/olm-utils-v3:latest"
+                output:
+                  to:
+                    kind: ImageStreamTag
+                    name: 'cloud-pak-deployer:latest'
+                triggeredBy:
+                  - message: Manually triggered
+            EOF
+
+              sleep 20
+
+              while true
+              do
+                is_complete=$(oc get -n $(params.namespace) build/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Complete") | contains({"status": "'True'"})')
+                if [[ $is_complete != "true" ]]; then
+                  echo "Waiting for Build to be Complete. See cloud-pak-deployer Build logs in project $(params.namespace) for more details."
+                else
+                  echo "Cloud Pak Deployer Build is Complete."
+                  break
+                fi
+
+                did_fail=$(oc get -n $(params.namespace) build/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | contains({"status": "'True'"})')
+                if [[ $did_fail == "true" ]]; then
+                  echo "Cloud Pak Deployer Build failed."
+                  echo $(oc get -n $(params.namespace) build/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .reason')
+                  echo $(oc get -n $(params.namespace) build/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .message')
+                  exit 68
+                fi
+                
+                sleep 60
+              done
+            fi
+    - name: run-the-deployer
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      timeout: 7h0m0s
+      retries: 3
+      runAfter:
+        - bind-sa-role
+        - bind-sa-cluster-role
+        - create-pvc
+        - create-entitlement-key-secret
+        - configure-cloud-paks-services
+        - build-image
+      params:
+        - name: SCRIPT
+          value: |
+            oc delete job cloud-pak-deployer -n $(params.namespace) --ignore-not-found
+            oc delete job cloud-pak-deployer-debug -n $(params.namespace) --ignore-not-found
+
+            sleep 20
+
+            oc apply -f - <<EOF
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+              labels:
+                app: cloud-pak-deployer
+              name: cloud-pak-deployer
+              namespace: $(params.namespace)
+            spec:
+              parallelism: 1
+              completions: 1
+              backoffLimit: 1
+              template:
+                metadata:
+                  name: cloud-pak-deployer
+                  labels:
+                    app: cloud-pak-deployer
+                spec:
+                  containers:
+                  - name: cloud-pak-deployer
+                    image: $(params.cloud-pak-deployer-image-address):$(params.cloud-pak-deployer-image-tag)
+                    imagePullPolicy: Always
+                    terminationMessagePath: /dev/termination-log
+                    terminationMessagePolicy: File
+                    env:
+                    - name: CONFIG_DIR
+                      value: /Data/cpd-config
+                    - name: STATUS_DIR
+                      value: /Data/cpd-status
+                    - name: CP_ENTITLEMENT_KEY
+                      valueFrom:
+                        secretKeyRef:
+                          key: cp-entitlement-key
+                          name: cloud-pak-entitlement-key
+                    volumeMounts:
+                    - name: config-volume
+                      mountPath: /Data/cpd-config/config
+                    - name: status-volume
+                      mountPath: /Data/cpd-status
+                    command: ["/bin/sh","-xc"]
+                    args: 
+                      - /cloud-pak-deployer/cp-deploy.sh env apply -v
+                  restartPolicy: Never
+                  securityContext:
+                    runAsUser: 0
+                  serviceAccountName: cloud-pak-deployer-sa
+                  volumes:
+                  - name: config-volume
+                    configMap:
+                      name: cloud-pak-deployer-config
+                  - name: status-volume
+                    persistentVolumeClaim:
+                      claimName: cloud-pak-deployer-status
+            EOF
+
+            oc apply -f - <<EOF
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+              labels:
+                app: cloud-pak-deployer-debug
+              name: cloud-pak-deployer-debug
+              namespace: $(params.namespace)
+            spec:
+              parallelism: 1
+              completions: 1
+              backoffLimit: 1
+              template:
+                metadata:
+                  name: cloud-pak-deployer-debug
+                  labels:
+                    app: cloud-pak-deployer-debug
+                spec:
+                  containers:
+                  - name: cloud-pak-deployer-debug
+                    image: $(params.cloud-pak-deployer-image-address):$(params.cloud-pak-deployer-image-tag)
+                    imagePullPolicy: Always
+                    terminationMessagePath: /dev/termination-log
+                    terminationMessagePolicy: File
+                    env:
+                    - name: CONFIG_DIR
+                      value: /Data/cpd-config
+                    - name: STATUS_DIR
+                      value: /Data/cpd-status
+                    - name: CP_ENTITLEMENT_KEY
+                      valueFrom:
+                        secretKeyRef:
+                          key: cp-entitlement-key
+                          name: cloud-pak-entitlement-key
+                    volumeMounts:
+                    - name: config-volume
+                      mountPath: /Data/cpd-config/config
+                    - name: status-volume
+                      mountPath: /Data/cpd-status
+                    command: ["/bin/sh","-xc"]
+                    args: 
+                       - sleep infinity
+                  restartPolicy: Never
+                  securityContext:
+                    runAsUser: 0
+                  serviceAccountName: cloud-pak-deployer-sa
+                  volumes:
+                  - name: config-volume
+                    configMap:
+                      name: cloud-pak-deployer-config
+                  - name: status-volume
+                    persistentVolumeClaim:
+                      claimName: cloud-pak-deployer-status
+            EOF
+
+            sleep 20
+
+            while true
+            do
+              is_complete=$(oc get -n $(params.namespace) job/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Complete") | contains({"status": "'True'"})')
+              if [[ $is_complete != "true" ]]; then
+                echo "Waiting for job to be Complete. See cloud-pak-deployer pod's logs in project $(params.namespace) for more details."
+              else
+                echo "Cloud Pak Deployer job is Complete."
+                break
+              fi
+
+              did_fail=$(oc get -n $(params.namespace) job/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | contains({"status": "'True'"})')
+              if [[ $did_fail == "true" ]]; then
+                echo "Cloud Pak Deployer job failed."
+                echo $(oc get -n $(params.namespace) job/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .reason')
+                echo $(oc get -n $(params.namespace) job/cloud-pak-deployer -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .message')
+                exit 68
+              fi
+              
+              sleep 60
+            done
+    - name: co-add-sa
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - run-the-deployer
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: cb4ba-deployment-tool-sa
+              namespace: $(params.cp4ba-project)
+            EOF
+    - name: co-bind-sa-role
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - co-add-sa
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: RoleBinding
+            metadata:
+              name: system:openshift:scc:privileged
+              namespace: $(params.cp4ba-project)
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: system:openshift:scc:privileged
+            subjects:
+              - kind: ServiceAccount
+                name: cb4ba-deployment-tool-sa
+                namespace: $(params.cp4ba-project)
+            EOF
+    - name: co-bind-sa-cluster-role
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - co-add-sa
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: cb4ba-deployment-tool-cluster-admin
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: cluster-admin
+            subjects:
+            - kind: ServiceAccount
+              name: cb4ba-deployment-tool-sa
+              namespace: $(params.cp4ba-project)
+            EOF
+    - name: co-config
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - run-the-deployer
+      params:
+        - name: SCRIPT
+          value: |
+            dollar="$"
+
+            oc apply -f - <<EOF 
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: client-onboarding-user-config
+              namespace: $(params.cp4ba-project)
+            data:
+              AddUsersToPlatform.json: |
+                {
+                    "comment": "Use this snippet to add x (userTargetNumber) business users with the names specific naming format (userBaseName & userNumberingFormatter) and a generated (userPassword = -generated-) password of five (generatedUserPasswordLength) alphanumeric characters or static password to the LDAP. Each user is member of the environments 'general users group'. Onboard them to the Cloud Pak with the given roles (uppercase USER occurrences will be replaced with the actual user name, other variables will be replaced with the correct values of the environment)",
+                    "entities": [
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}USER${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "USER",
+                            "sn": "USER",
+                            "uid": "USER",
+                            "userPassword": "$(params.co-generated-users-password)",
+                            "generatedUserPasswordLength": 20,
+                            "homeDirectory": "/home/USER/",
+                            "mail": "USER${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                               {
+                                  "dn": "${dollar}(generalUsersGroupFull)${dollar}"
+                               }
+                            ],
+                            "roles": [
+                            	"iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ],
+                            "replacementText": "USER",
+                            "userBaseName": "usr",
+                            "userNumberingFormatter": "%03d",
+                            "userStartNumber": "1",
+                            "userTargetNumber": "10"
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_1${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_1",
+                            "sn": "cpadmin_1",
+                            "uid": "cpadmin_1",
+                            "userPassword": "txc2025_magic_1",
+                            "homeDirectory": "/home/cpadmin_1/",
+                            "mail": "cpadmin_1${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_2${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_2",
+                            "sn": "cpadmin_2",
+                            "uid": "cpadmin_2",
+                            "userPassword": "txc2025_magic_2",
+                            "homeDirectory": "/home/cpadmin_2/",
+                            "mail": "cpadmin_2${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_3${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_3",
+                            "sn": "cpadmin_3",
+                            "uid": "cpadmin_3",
+                            "userPassword": "txc2025_magic_3",
+                            "homeDirectory": "/home/cpadmin_3/",
+                            "mail": "cpadmin_3${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_4${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_4",
+                            "sn": "cpadmin_4",
+                            "uid": "cpadmin_4",
+                            "userPassword": "txc2025_magic_4",
+                            "homeDirectory": "/home/cpadmin_4/",
+                            "mail": "cpadmin_4${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_5${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_5",
+                            "sn": "cpadmin_5",
+                            "uid": "cpadmin_5",
+                            "userPassword": "txc2025_magic_5",
+                            "homeDirectory": "/home/cpadmin_5/",
+                            "mail": "cpadmin_5${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_6${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_6",
+                            "sn": "cpadmin_6",
+                            "uid": "cpadmin_6",
+                            "userPassword": "txc2025_magic_6",
+                            "homeDirectory": "/home/cpadmin_6/",
+                            "mail": "cpadmin_6${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_7${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_7",
+                            "sn": "cpadmin_7",
+                            "uid": "cpadmin_7",
+                            "userPassword": "txc2025_magic_7",
+                            "homeDirectory": "/home/cpadmin_7/",
+                            "mail": "cpadmin_7${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_8${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_8",
+                            "sn": "cpadmin_8",
+                            "uid": "cpadmin_8",
+                            "userPassword": "txc2025_magic_8",
+                            "homeDirectory": "/home/cpadmin_8/",
+                            "mail": "cpadmin_8${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_9${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_9",
+                            "sn": "cpadmin_9",
+                            "uid": "cpadmin_9",
+                            "userPassword": "txc2025_magic_9",
+                            "homeDirectory": "/home/cpadmin_9/",
+                            "mail": "cpadmin_9${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        },
+                       {
+                            "enabled": true,
+                            "type": "user",
+                            "dn": "${dollar}(ldapUserQualifier)${dollar}cpadmin_10${dollar}(ldapUserOrg)${dollar}",
+                            "cn": "cpadmin_10",
+                            "sn": "cpadmin_10",
+                            "uid": "cpadmin_10",
+                            "userPassword": "txc2025_magic_10",
+                            "homeDirectory": "/home/cpadmin_10/",
+                            "mail": "cpadmin_10${dollar}(localMailDomain)${dollar}",
+                            "members": [
+                              {
+                                "dn": "cn=cpadmins${dollar}(ldapGroupOrg)${dollar}"
+                              }
+                            ],
+                            "roles": [
+                              "iaf-automation-admin",
+                              "iaf-automation-developer"
+                            ]
+                        }
+                    ]
+                }
+            EOF
+    - name: co-add-allow-all-netpol
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - run-the-deployer
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f - <<EOF 
+            apiVersion: networking.k8s.io/v1
+            kind: NetworkPolicy
+            metadata:
+              name: client-onboarding-deploy-egress-allow-all
+              namespace: $(params.cp4ba-project)
+            spec:
+              podSelector:
+                matchLabels:
+                  job-name: client-onboarding-deploy
+              egress:
+                - {}
+              policyTypes:
+                - Egress
+            EOF
+    - name: co-job
+      when:
+        - input: $(params.co-deploy)
+          operator: in
+          values: ["true"]    
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - co-bind-sa-role
+        - co-bind-sa-cluster-role
+        - co-config
+        - co-add-allow-all-netpol
+      params:
+        - name: SCRIPT
+          value: |
+            dollar="$"
+
+            oc delete job client-onboarding-deploy -n $(params.cp4ba-project) --ignore-not-found
+
+            sleep 20
+
+            oc apply -f - <<EOF 
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+              name: client-onboarding-deploy
+              namespace: $(params.cp4ba-project)
+            spec:
+              template:
+                metadata:
+                  labels:
+                    app: client-onboarding-deploy
+                spec:
+                  serviceAccountName: cb4ba-deployment-tool-sa
+                  volumes:
+                    - name: log-pvc
+                      persistentVolumeClaim:
+                        claimName: cp4a-shared-log-pvc
+                    - name: client-onboarding-user-config
+                      configMap:
+                        name: client-onboarding-user-config
+                  containers:
+                    - name: client-onboarding-deploy
+                      image: ubi9/ubi:9.3
+                      command: ["/bin/bash"]
+                      args:
+                        ["-c",
+                        "currentowner=\`ls -n -l '${dollar}(LOG_DIR_BASE)/CaseInit.log' | awk 'NR==1 {print \$3}'\`;
+                        mkdir -p '${dollar}(LOG_DIR)';
+                        chown -R \$currentowner '${dollar}(LOG_DIR_BASE_CO)';
+                        mkdir /usr/client-onboarding;
+                        cd /usr/client-onboarding;
+                        curl -sO https://download.java.net/java/GA/jdk9/9/binaries/openjdk-9_linux-x64_bin.tar.gz;
+                        echo 'Downloaded OpenJDK 9';
+                        tar -xf openjdk-9_linux-x64_bin.tar.gz;
+                        ln -fs \`pwd\`/jdk-9/bin/java /usr/local/bin/java;
+                        curl -sO https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz;
+                        echo 'Downloaded OpenShift CLI';
+                        tar -xzf openshift-client-linux.tar.gz;
+                        ln -fs \`pwd\`/oc /usr/local/bin/oc;
+                        oc project ${dollar}(NAMESPACE);
+                        deploymenttype=\`oc get icp4acluster -o json | grep -Po '\\"olm_deployment_type\\":.*\",' | awk -F': \\\\\"|\\\\\",' '{print \$2}'\`;
+                        deploymentversion=\`oc get icp4acluster -o json | grep -Po '\\"appVersion\\":.*\\",' | awk -F': \\"|\\",' '{print \$2}'\`;
+                        curl -sLO https://raw.githubusercontent.com/IBM/cp4ba-client-onboarding-scenario/main/\$deploymentversion/Deployment_Automation/deployClientOnboardingECMLabsOnlyCloudPakDeployerEnterpriseParam.sh;
+                        echo 'Downloaded client onboarding deploy sh file';
+                        chmod u+x deployClientOnboardingECMLabsOnlyCloudPakDeployerEnterpriseParam.sh;
+                        ./deployClientOnboardingECMLabsOnlyCloudPakDeployerEnterpriseParam.sh --ocls \`oc whoami --show-server=true\` --oclt \`oc whoami -t\` --cu '${dollar}(createUsers)';"]
+                      imagePullPolicy: IfNotPresent
+                      env:
+                        - name: PODNAME
+                          valueFrom:
+                            fieldRef:
+                              fieldPath: metadata.name
+                        - name: NAMESPACE
+                          valueFrom:
+                            fieldRef:
+                              fieldPath: metadata.namespace
+                        - name: LOG_DIR_BASE
+                          value: /logs/application
+                        - name: LOG_DIR_BASE_CO
+                          value: ${dollar}(LOG_DIR_BASE)/client-onboarding
+                        - name: LOG_DIR
+                          value: ${dollar}(LOG_DIR_BASE_CO)/${dollar}(PODNAME)
+                        - name: configureLabs
+                          value: "$(params.co-configure-labs)"
+                        - name: enableWorkflowLabsForBusinessUsers
+                          value: "$(params.co-enable-workflow-labs-for-business-users)"
+                        - name: createUsers
+                          value: "$(params.co-create-users)"
+                        - name: rpaBotExecutionUser
+                          value: $(params.co-rpa-bot-execution-user)
+                        - name: rpaServer
+                          value: $(params.co-rpa-server)
+                        - name: printDetailedMessageToConsole
+                          value: "$(params.co-print-detailed-message-to-console)"
+                        - name: bootstrapDebugString
+                          value: "com.ibm.dba.swat.cp4ba.tools.ocp.OCPManagerUtil=finest;*=finest"
+                        - name: debugString
+                          value: "*=finest"
+                      volumeMounts:
+                        - name: log-pvc
+                          mountPath: /logs/application
+                        - name: client-onboarding-user-config
+                          mountPath: /usr/client-onboarding/AddUsersToPlatform.json
+                          subPath: AddUsersToPlatform.json                          
+                  restartPolicy: Never
+              backoffLimit: 2
+            EOF
+
+            sleep 20
+
+            while true
+            do
+              is_complete=$(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Complete") | contains({"status": "'True'"})')
+              if [[ $is_complete != "true" ]]; then
+                echo "Waiting for job to be Complete. See client-onboarding-deploy pod's logs in project $(params.cp4ba-project) for more details."
+              else
+                echo "Client Onboarding job is Complete."
+                break
+              fi
+
+              did_fail=$(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | contains({"status": "'True'"})')
+              if [[ $did_fail == "true" ]]; then
+                echo "Client Onboarding job failed."
+                echo $(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .reason')
+                echo $(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .message')
+                exit 68
+              fi
+              
+              sleep 60
+            done
+    - name: da-pipeline-sync
+    # waiting for CO as it restarts some services and that could cause other demos deployment to fail
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - da-deployment
+        - run-the-deployer
+      params:
+        - name: SCRIPT
+          value: |
+            CO_DEPLOY=$(params.co-deploy)
+            if [ "$CO_DEPLOY" = true ]; then
+              while true
+              do
+                is_complete=$(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Complete") | contains({"status": "'True'"})')
+                if [[ $is_complete != "true" ]]; then
+                  echo "Waiting for job to be Complete. See client-onboarding-deploy pod's logs in project $(params.cp4ba-project) for more details."
+                else
+                  echo "Client Onboarding job is Complete."
+                  break
+                fi
+
+                did_fail=$(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | contains({"status": "'True'"})')
+                if [[ $did_fail == "true" ]]; then
+                  echo "Client Onboarding job failed."
+                  echo $(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .reason')
+                  echo $(oc get -n $(params.cp4ba-project) job/client-onboarding-deploy -o yaml | yq '.status.conditions.[] | select(.type == "Failed") | .message')
+                  sleep 60 # Preventive sleep to allow CO Job to be restarted
+                  exit 68
+                fi
+
+                sleep 60
+              done
+            fi
+    - name: cm-deployment
+      when:
+        - input: $(params.da-deploy)
+          operator: in
+          values: ["true"]
+        - input: $(params.cm-deploy)
+          operator: in
+          values: ["true"]
+      retries: 3
+      taskRef:
+        kind: Task
+        name: ibm-pak
+      runAfter:
+        - da-pipeline-sync
+      params:
+        - name: SCRIPT
+          value: |
+            INSTALL_URL="http://cp4accelerator-service.$(params.cp4ba-project).svc.cluster.local:8080/Toolbox/installDemoRest?id=ClaimsManagement"
+            CHECK_URL="http://cp4accelerator-service.$(params.cp4ba-project).svc.cluster.local:8080/Toolbox/demoStatus?id=ClaimsManagement"
+
+            response_body=$(curl -ks "$CHECK_URL")
+            # Check if the response body contains "Installed"
+            if [[ "$response_body" == "Installed" ]]; then
+                echo "Condition met: Response body already contains 'Installed'."
+                exit 0
+            fi
+            #Execute installation of demo
+            response_body=$(curl -kv "$INSTALL_URL")
+            echo "Response body of the Install curl call is:\n$response_body"
+
+            # Define the total timeout (15 minutes) and sleep interval (20 seconds)
+            TOTAL_TIMEOUT=900   # 15 minutes in seconds
+            SLEEP_INTERVAL=20   # 20 seconds sleep
+            MAX_ATTEMPTS=$((TOTAL_TIMEOUT / SLEEP_INTERVAL)) # Calculate maximum attempts
+
+            # Initialize variables
+            attempt=0
+            success=false
+
+            # Loop until the condition is satisfied or max attempts are reached
+            while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
+                # Increment the attempt counter
+                attempt=$((attempt + 1))
+                
+                # Perform the curl request and capture the response
+                response_body=$(curl -ks "$CHECK_URL")
+
+                # Check if the response body contains "Installed"
+                if [[ "$response_body" == "Installed" ]]; then
+                    echo "Condition met: Response body contains 'Installed'."
+                    success=true
+                    break
+                else
+                    echo "Attempt $attempt/$MAX_ATTEMPTS: Response body is not equal to 'Installed'. It is \"$response_body\""
+                    sleep "$SLEEP_INTERVAL" # Wait before retrying
+                fi
+            done
+
+            # Check if the loop exited successfully
+            if [ "$success" = true ]; then
+                echo "Success: The condition was met within the timeout period."
+            else
+                echo "Failure: Condition not met after $((TOTAL_TIMEOUT / 60)) minutes."
+                exit 1
+            fi
