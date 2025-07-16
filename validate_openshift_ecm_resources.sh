@@ -73,14 +73,25 @@ check_services() {
   done
 }
 
-# Run all checks
-if check_cluster_health && \
-   check_pipeline_status && \
-   check_configmap && \
-   check_services; then
+# Initialize status flag
+STATUS=0
+
+# Run all checks individually
+check_cluster_health || STATUS=1
+check_pipeline_status || STATUS=1
+check_configmap || STATUS=1
+check_services || STATUS=1
+
+# Evaluate overall result
+if [ "$STATUS" -eq 0 ]; then
   echo "✅ All checks completed successfully."
+
+  # Display only the 'data' field of the ConfigMap
+  echo -e "\n📄 Key onboarding information from ConfigMap '000-client-onboarding-information':"
+  oc get configmap 000-client-onboarding-information -n cp4ba -o jsonpath='{.data.information}' | fold -s
 else
   echo "❌ One or more checks failed. Please review the messages above."
   exit 1
 fi
+
 
