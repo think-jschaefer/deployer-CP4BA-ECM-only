@@ -1,9 +1,142 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  generateName: cp4ba-cloud-pak-deployer-demos-run-
+  generateName: cp4ba-cloud-pak-deployer-demos-pipeline-txc2025-ecm-only-
 spec:
-  timeouts:
-    pipeline: 4h0m0s
+  params:
+    - name: namespace
+      value: cloud-pak-deployer
+    - name: storage-class
+      value: ocs-external-storagecluster-cephfs
+    - name: cloud-pak-deployer-storage-class
+      value: auto-storage
+    - name: cloud-pak-deployer-storage-type
+      value: auto
+    - name: ocp-client-version
+      value: '4.16'
+    - name: cloud-pak-deployer-image-build
+      value: 'false'
+    - name: cloud-pak-deployer-image-build-repo
+      value: 'https://github.com/IBM/cloud-pak-deployer'
+    - name: cloud-pak-deployer-image-build-repo-ref
+      value: main
+    - name: cloud-pak-deployer-image-address
+      value: quay.io/cloud-pak-deployer/cloud-pak-deployer
+    - name: cloud-pak-deployer-image-tag
+      value: v3.1.8
+    - name: ibm-entitlement-key
+      value: 'false'
+    - name: universal-password
+      value: ""
+    - name: cp4ba-project
+      value: cp4ba
+    - name: cp4ba-collateral-project
+      value: cp4ba-collateral
+    - name: cp4ba-state
+      value: installed
+    - name: cpfs-profile-size
+      value: small
+    - name: cp4ba-profile-size
+      value: small
+    - name: bas-enabled
+      value: 'false'
+    - name: bai-enabled
+      value: 'false'
+    - name: ae-enabled
+      value: 'false'
+    - name: decisions-enabled
+      value: 'false'
+    - name: decision-center-enabled
+      value: 'false'
+    - name: decision-runner-enabled
+      value: 'false'
+    - name: decision-server-runtime-enabled
+      value: 'false'
+    - name: decisions-ads-enabled
+      value: 'false'
+    - name: ads-designer-enabled
+      value: 'false'
+    - name: ads-runtime-enabled
+      value: 'false'
+    - name: ads-genai-api-key
+      value: <watsonx_ai_api_key>
+    - name: ads-genai-auth-url
+      value: 'https://iam.bluemix.net/identity/token'
+    - name: ads-genai-ml-url
+      value: 'https://us-south.ml.cloud.ibm.com'
+    - name: ads-genai-project-id
+      value: <project_id>
+    - name: content-enabled
+      value: 'true'
+    - name: cmis-enabled
+      value: 'true'
+    - name: css-enabled
+      value: 'true'
+    - name: es-enabled
+      value: 'true'
+    - name: tm-enabled
+      value: 'true'
+    - name: ier-enabled
+      value: 'false'
+    - name: icc4sap-enabled
+      value: 'false'
+    - name: application-enabled
+      value: 'false'
+    - name: app-designer-enabled
+      value: 'false'
+    - name: ae-data-persistence-enabled
+      value: 'false'
+    - name: document-processing-enabled
+      value: 'false'
+    - name: document-processing-designer-enabled
+      value: 'false'
+    - name: workflow-enabled
+      value: 'false'
+    - name: baw-authoring-enabled
+      value: 'false'
+    - name: kafka-enabled
+      value: 'false'
+    - name: pm-enabled
+      value: 'false'
+    - name: rpa-enabled
+      value: 'false'
+    - name: cloudbeaver-enabled
+      value: 'true'
+    - name: roundcube-enabled
+      value: 'true'
+    - name: cerebro-enabled
+      value: 'true'
+    - name: akhq-enabled
+      value: 'true'
+    - name: mongo-express-enabled
+      value: 'true'
+    - name: phpldapadmin-enabled
+      value: 'true'
+    - name: opensearch-dashboards-enabled
+      value: 'true'
+    - name: co-deploy
+      value: 'true'
+    - name: co-configure-labs
+      value: 'true'
+    - name: co-enable-workflow-labs-for-business-users
+      value: 'false'
+    - name: co-create-users
+      value: 'true'
+    - name: co-rpa-bot-execution-user
+      value: disabled
+    - name: co-rpa-server
+      value: disabled
+    - name: co-print-detailed-message-to-console
+      value: 'true'
+    - name: co-generated-users-password
+      value: "-generated-"
+    - name: da-deploy
+      value: 'true'
+    - name: da-image-tag
+      value: latest
+    - name: cm-deploy
+      value: 'false'
   pipelineRef:
     name: cp4ba-cloud-pak-deployer-demos-pipeline-txc2025-ecm-only
+  timeouts:
+    pipeline: 5h0m0s
