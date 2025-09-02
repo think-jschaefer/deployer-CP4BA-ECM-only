@@ -24,7 +24,7 @@ check_cluster_health() {
 check_pipeline_status() {
   echo "Checking pipeline run status..."
   NAMESPACE="default"
-  PIPELINE_RUN_PREFIX="cp4ba-cloud-pak-deployer-demos-run-"
+  PIPELINE_RUN_PREFIX="cp4ba-cloud-pak-deployer-demos-pipeline-txc2025-ecm-only-"
 
   # Get the most recent matching PipelineRun
   LAST_RUN=$(oc get pipelineruns -n "$NAMESPACE" --sort-by=.metadata.creationTimestamp \
