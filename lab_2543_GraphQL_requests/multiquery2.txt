@@ -1,0 +1,8 @@
+query multiquery2 {
+  folder(repositoryIdentifier: "CONTENT", identifier: "/") {
+    id
+  }
+  folder(repositoryIdentifier: "CONTENT", identifier: "/Case Folders") {
+    id
+  }
+}

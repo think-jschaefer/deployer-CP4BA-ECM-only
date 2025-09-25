@@ -1,0 +1,11 @@
+query multiquery2fixed {
+  rootfolder: folder(repositoryIdentifier: "CONTENT", identifier: "/") {
+    id
+  }
+  casefolders: folder(
+    repositoryIdentifier: "CONTENT"
+    identifier: "/Case Folders"
+  ) {
+    id
+  }
+}

@@ -1,0 +1,13 @@
+query multiquery {
+  domain {
+    name
+    objectStores {
+      objectStores {
+        displayName
+      }
+    }
+  }
+  folder(repositoryIdentifier: "CONTENT", identifier: "/") {
+    id
+  }
+}

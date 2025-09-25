@@ -1,0 +1,16 @@
+query domainquery4 {
+  domain {
+    id
+    name
+    properties(includes: ["SystemUserName"]) {
+      id
+      value
+    }
+    objectStores {
+      objectStores {
+        id
+        symbolicName
+      }
+    }
+  }
+}

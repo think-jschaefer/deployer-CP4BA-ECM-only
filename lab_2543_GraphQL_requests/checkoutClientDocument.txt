@@ -1,0 +1,15 @@
+mutation checkoutClientDocument {
+  checkoutDocument(
+    repositoryIdentifier: "CONTENT"
+    identifier: "/<unique ID> GraphQL Folder/Test graphQLDoc"
+    checkoutAction: {reservationProperties: [{DocumentTitle: "reservation doc"}]}
+  ) {
+    id
+    name
+    reservation {
+      id
+      name
+      dateCreated
+    }
+  }
+}

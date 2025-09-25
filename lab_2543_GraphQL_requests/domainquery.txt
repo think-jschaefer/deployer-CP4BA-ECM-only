@@ -1,0 +1,6 @@
+query domainquery {
+  domain {
+    id
+    name
+  }
+}

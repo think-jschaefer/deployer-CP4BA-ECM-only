@@ -1,0 +1,16 @@
+query retrieveMyDoc($repoId: String!, $docId: String!) {
+  document(repositoryIdentifier: $repoId, identifier: $docId) {
+    className
+    id
+    name
+    majorVersionNumber
+    minorVersionNumber
+  }
+}
+
+###### Copy and Paste the text below into the *Query Variables* section of GraphiQL ###### 
+
+{
+	"repoId":"CONTENT",
+	"docId":"/SOLUTION Client Onboarding/Banking Information - Automation Elite Inc.pdf"
+}

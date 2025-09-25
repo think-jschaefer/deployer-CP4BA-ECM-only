@@ -1,0 +1,9 @@
+query foldersquery {
+  folders(repositoryIdentifier: "CONTENT", from: "SWAT_JAM_Case_Folder") {
+    folders {
+      id
+      pathName
+      className
+    }
+  }
+}

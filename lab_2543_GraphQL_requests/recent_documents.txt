@@ -1,0 +1,18 @@
+query recent_documents {
+  documents(
+    repositoryIdentifier: "CONTENT"
+    from: "Document"
+    where: "[DateCreated] > 20250110T070000Z AND [IsCurrentVersion] = True"
+    orderBy: "DocumentTitle"
+    pageSize: 10
+  ) {
+    documents {
+      dateCreated
+      id
+      name
+      majorVersionNumber
+      minorVersionNumber
+      mimeType
+    }
+  }
+}

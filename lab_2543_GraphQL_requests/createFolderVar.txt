@@ -1,0 +1,16 @@
+mutation createFolderVar($ParentGraphQLFolderName: String!, $ChildFolderName: String!) {
+  createFolder(
+    repositoryIdentifier: "CONTENT"
+    folderProperties: {name: $ChildFolderName, parent: {identifier: $ParentGraphQLFolderName}}
+  ) {
+    name
+    className
+    pathName
+  }
+}
+###### Copy and Paste the text below into the *Query Variables* section of GraphiQL ###### 
+
+{
+  "ParentGraphQLFolderName": "/<unique ID> GraphQL Folder",
+  "ChildFolderName": "<unique ID> New Child Folder"
+}

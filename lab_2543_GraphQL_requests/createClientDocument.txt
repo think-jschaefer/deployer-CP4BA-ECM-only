@@ -1,0 +1,13 @@
+mutation createClientDocument {
+  createDocument(
+    repositoryIdentifier: "CONTENT"
+    classIdentifier: "ClientDocument"
+    fileInFolderIdentifier: "/<unique_ID> GraphQL Folder"
+    documentProperties: {name: "Test graphQLDoc", properties: [{Client_Name: "Automation Elite Inc"}, {ReferenceID: "12345"}]}
+    checkinAction: {}
+  ) {
+    id
+    name
+    className
+  }
+}

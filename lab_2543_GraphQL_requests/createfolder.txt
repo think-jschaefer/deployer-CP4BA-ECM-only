@@ -1,0 +1,9 @@
+mutation createfolder {
+  createFolder(
+    repositoryIdentifier: "CONTENT"
+    classIdentifier: "Folder"
+    folderProperties: {parent: {identifier: "/"}, name: "<unique_id> GraphQL Folder"}
+  ) {
+    id
+  }
+}

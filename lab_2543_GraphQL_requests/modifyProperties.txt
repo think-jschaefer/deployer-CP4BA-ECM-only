@@ -1,0 +1,14 @@
+mutation modifyProperties {
+  updateDocument(
+    repositoryIdentifier: "CONTENT"
+    identifier: "/<unique ID> GraphQL Folder/Test graphQLDoc"
+    documentProperties: {properties: [{Client_Name: "Automation Elite Updated"}, {ReferenceID: "abcUpdated"}]}
+  ) {
+    id
+    name
+    properties(includes: ["Client_Name", "ReferenceID"]) {
+      id
+      value
+    }
+  }
+}

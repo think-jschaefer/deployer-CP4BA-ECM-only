@@ -1,0 +1,29 @@
+query COfolderquery3 {
+  folder(
+    repositoryIdentifier: "CONTENT"
+    identifier: "/SOLUTION Client Onboarding"
+  ) {
+    name
+    id
+    containedDocuments {
+      documents {
+        id
+        name
+        creator
+        dateCreated
+        majorVersionNumber
+        minorVersionNumber
+        mimeType
+        contentElements {
+          className
+          contentType
+          ... on ContentTransfer {
+            contentSize
+            retrievalName
+            downloadUrl
+          }
+        }
+      }
+    }
+  }
+}

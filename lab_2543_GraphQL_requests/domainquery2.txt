@@ -1,0 +1,10 @@
+query domainquery2 {
+  domain {
+    id
+    name
+    accessAllowed
+    properties(includes: ["SystemUserName"]) {
+      id
+    }
+  }
+}

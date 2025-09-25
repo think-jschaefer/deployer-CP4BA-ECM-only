@@ -1,0 +1,6 @@
+query folderquery2 {
+  folder(repositoryIdentifier: "CONTENT", identifier: "/") {
+    name
+    id
+  }
+}
